@@ -111,6 +111,17 @@ class MetricAggregationParams(dbtClassMixin):
 
 
 @dataclass
+class MetricParam(dbtClassMixin):
+    """Runtime parameter declared on a metric; values are supplied at query time."""
+
+    name: str
+    description: Optional[str] = None
+    type: str = "string"
+    required: bool = True
+    default: Optional[str] = None
+
+
+@dataclass
 class MetricTypeParams(dbtClassMixin):
     # Only used in v1 Semantic YAML
     measure: Optional[MetricInputMeasure] = None
@@ -164,6 +175,7 @@ class Metric(GraphResource):
     filter: Optional[WhereFilterIntersection] = None
     metadata: Optional[SourceFileMetadata] = None
     time_granularity: Optional[str] = None
+    params: Optional[List[MetricParam]] = None
     resource_type: Literal[NodeType.Metric]
     config: MetricConfig = field(default_factory=MetricConfig)
     unrendered_config: Dict[str, Any] = field(default_factory=dict)

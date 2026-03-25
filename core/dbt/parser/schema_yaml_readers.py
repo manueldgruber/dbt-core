@@ -21,6 +21,7 @@ from dbt.artifacts.resources import (
     MetricConfig,
     MetricInput,
     MetricInputMeasure,
+    MetricParam,
     MetricTimeWindow,
     MetricTypeParams,
     NonAdditiveDimension,
@@ -438,6 +439,20 @@ class MetricParser(YamlReader):
             window_groupings=unparsed_non_additive_dimension.group_by,
         )
 
+    def _get_metric_params(self, unparsed: UnparsedMetricBase) -> Optional[List[MetricParam]]:
+        if unparsed.params is None:
+            return None
+        return [
+            MetricParam(
+                name=p.name,
+                description=p.description,
+                type=p.type,
+                required=p.required,
+                default=p.default,
+            )
+            for p in unparsed.params
+        ]
+
     def _get_metric_type_params(
         self,
         unparsed_metric: UnparsedMetricBase,
@@ -590,6 +605,7 @@ class MetricParser(YamlReader):
                 default_agg_time_dimension=default_agg_time_dimension,
             ),
             time_granularity=unparsed.time_granularity,
+            params=self._get_metric_params(unparsed),
             filter=parse_where_filter(unparsed.filter),
             meta=meta,
             tags=tags,

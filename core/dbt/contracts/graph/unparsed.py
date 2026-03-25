@@ -332,6 +332,17 @@ class UnparsedMetricInput(dbtClassMixin):
 
 
 @dataclass
+class UnparsedMetricParam(dbtClassMixin):
+    """Runtime parameter for parameterized metrics (declared in YAML; values at query time)."""
+
+    name: str
+    description: Optional[str] = None
+    type: str = "string"
+    required: bool = True
+    default: Optional[str] = None
+
+
+@dataclass
 class UnparsedConversionTypeParams(dbtClassMixin):
     """Only used in v1 Semantic YAML"""
 
@@ -379,6 +390,7 @@ class UnparsedMetricBase(dbtClassMixin):
     # Note: `Union` must be the outermost part of the type annotation for serialization to work properly.
     filter: Union[str, List[str], None] = None
     time_granularity: Optional[str] = None
+    params: Optional[List[UnparsedMetricParam]] = None
 
     config: Dict[str, Any] = field(default_factory=dict)
 

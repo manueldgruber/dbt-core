@@ -27,6 +27,7 @@ from dbt.contracts.graph.unparsed import (
     UnparsedMacro,
     UnparsedMetric,
     UnparsedMetricInputMeasure,
+    UnparsedMetricParam,
     UnparsedMetricTypeParams,
     UnparsedMetricV2,
     UnparsedModelUpdate,
@@ -1021,6 +1022,21 @@ class TestUnparsedMetric(BaseTestUnparsedMetric, ContractTestCase):
         del tst["type_params"]
         self.assert_fails_validation(tst)
 
+    def test_metric_params_roundtrip(self):
+        dct = self.get_ok_dict()
+        dct["params"] = [
+            {"name": "product_name", "type": "string", "required": True},
+            {"name": "min_spend", "type": "int", "required": False, "default": "0"},
+        ]
+        metric = self.ContractType.from_dict(dct)
+        assert metric.params is not None
+        assert len(metric.params) == 2
+        assert metric.params[0] == UnparsedMetricParam(name="product_name", type="string")
+        assert metric.params[1] == UnparsedMetricParam(
+            name="min_spend", type="int", required=False, default="0"
+        )
+        self.assert_symmetric(metric, dct)
+
 
 class TestUnparsedMetricV2(BaseTestUnparsedMetric, ContractTestCase):
     ContractType = UnparsedMetricV2
@@ -1071,6 +1087,15 @@ class TestUnparsedMetricV2(BaseTestUnparsedMetric, ContractTestCase):
         tst = self.get_ok_dict_with_defaults()
         del tst["agg"]
         self.assert_fails_validation(tst)
+
+    def test_metric_params_roundtrip(self):
+        dct = self.get_ok_dict_with_defaults()
+        dct["params"] = [{"name": "region", "type": "string", "required": True}]
+        metric = self.ContractType.from_dict(dct)
+        assert metric.params is not None
+        assert len(metric.params) == 1
+        assert metric.params[0].name == "region"
+        self.assert_symmetric(metric, dct)
 
 
 class TestUnparsedVersion(ContractTestCase):
