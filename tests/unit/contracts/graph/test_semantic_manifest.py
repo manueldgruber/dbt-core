@@ -251,12 +251,10 @@ class TestSemanticManifest:
             type_params=MetricTypeParams(),
             parameters=[
                 MetricParameter(
-                    name="percentile",
-                    type=ParameterType.NUMBER,
+                    name="region",
+                    type=ParameterType.STRING,
                     required=True,
-                    default=0.95,
-                    min=0,
-                    max=1,
+                    default="emea",
                 )
             ],
             resource_type=NodeType.Metric,
@@ -265,7 +263,7 @@ class TestSemanticManifest:
             original_file_path="models/test/parameterized_metric.yml",
             unique_id="metric.test.parameterized_metric",
             fqn=["test", "parameterized_metric"],
-            description="P{{ parameter('percentile') }} metric",
+            description="Metric for {{ parameter('region') }}",
             label="Parameterized Metric",
         )
 
@@ -274,8 +272,8 @@ class TestSemanticManifest:
             metric for metric in semantic_manifest.metrics if metric.name == "parameterized_metric"
         )
 
-        assert parameterized_metric.description == "P{{ parameter('percentile') }} metric"
+        assert parameterized_metric.description == "Metric for {{ parameter('region') }}"
         assert len(parameterized_metric.parameters) == 1
-        assert parameterized_metric.parameters[0].name == "percentile"
-        assert parameterized_metric.parameters[0].type == ParameterType.NUMBER
-        assert parameterized_metric.parameters[0].default == 0.95
+        assert parameterized_metric.parameters[0].name == "region"
+        assert parameterized_metric.parameters[0].type == ParameterType.STRING
+        assert parameterized_metric.parameters[0].default == "emea"
