@@ -8,6 +8,7 @@ from dbt_semantic_interfaces.type_enums import (
     DimensionType,
     EntityType,
     MetricType,
+    ParameterType,
     PeriodAggregation,
 )
 from tests.functional.assertions.test_runner import dbtTestRunner
@@ -290,7 +291,7 @@ class TestMetricOnModelParsingWorks:
             metric.name: metric
             for metric in semantic_manifest._get_pydantic_semantic_manifest().metrics
         }
-        assert len(metrics) == 5
+        assert len(metrics) == 6
 
         simple_metric = metrics["metric.test.simple_metric"]
         assert simple_metric.name == "simple_metric"
@@ -406,6 +407,23 @@ class TestMetricOnModelParsingWorks:
             percentile_metric_pydantic.type_params.metric_aggregation_params.agg_time_dimension
             == "second_dim"
         )
+
+        parameterized_percentile_metric = metrics["metric.test.parameterized_percentile_metric"]
+        assert parameterized_percentile_metric.name == "parameterized_percentile_metric"
+        assert parameterized_percentile_metric.description == "P{{ parameter('percentile_label') }} percentile"
+        assert len(parameterized_percentile_metric.parameters) == 2
+        assert parameterized_percentile_metric.parameters[0].name == "percentile"
+        assert parameterized_percentile_metric.parameters[0].type == ParameterType.NUMBER
+        assert parameterized_percentile_metric.parameters[1].name == "percentile_label"
+        assert parameterized_percentile_metric.parameters[1].default == 99
+
+        parameterized_percentile_metric_pydantic = semantic_manifest_metrics["parameterized_percentile_metric"]
+        assert parameterized_percentile_metric_pydantic.description == "P{{ parameter('percentile_label') }} percentile"
+        assert len(parameterized_percentile_metric_pydantic.parameters) == 2
+        assert parameterized_percentile_metric_pydantic.parameters[0].name == "percentile"
+        assert parameterized_percentile_metric_pydantic.parameters[0].type == ParameterType.NUMBER
+        assert parameterized_percentile_metric_pydantic.parameters[1].name == "percentile_label"
+        assert parameterized_percentile_metric_pydantic.parameters[1].default == 99
 
         cumulative_metric = metrics["metric.test.cumulative_metric"]
         assert cumulative_metric.name == "cumulative_metric"

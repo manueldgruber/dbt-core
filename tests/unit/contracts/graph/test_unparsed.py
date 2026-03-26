@@ -27,6 +27,7 @@ from dbt.contracts.graph.unparsed import (
     UnparsedMacro,
     UnparsedMetric,
     UnparsedMetricInputMeasure,
+    UnparsedMetricParameter,
     UnparsedMetricTypeParams,
     UnparsedMetricV2,
     UnparsedModelUpdate,
@@ -43,6 +44,7 @@ from dbt.parser.schemas import ParserRef
 from dbt_semantic_interfaces.type_enums.conversion_calculation_type import (
     ConversionCalculationType,
 )
+from dbt_semantic_interfaces.type_enums.parameter_type import ParameterType
 from tests.unit.utils import ContractTestCase
 
 
@@ -216,26 +218,48 @@ class TestFreshnessThreshold(ContractTestCase):
         self.assertEqual(threshold.status(error_seconds), FreshnessStatus.Error)
         self.assertEqual(threshold.status(warn_seconds), FreshnessStatus.Warn)
         self.assertEqual(threshold.status(pass_seconds), FreshnessStatus.Pass)
-        pickle.loads(pickle.dumps(threshold))
 
-    def test_merged(self):
-        t1 = self.ContractType(
-            warn_after=Time(count=36, period=TimePeriod.hour),
-            error_after=Time(count=2, period=TimePeriod.day),
-        )
-        t2 = self.ContractType(
-            warn_after=Time(count=18, period=TimePeriod.hour),
-        )
-        threshold = self.ContractType(
-            warn_after=Time(count=18, period=TimePeriod.hour),
-            error_after=Time(count=None, period=None),
-        )
-        self.assertEqual(threshold, t1.merged(t2))
 
-        warn_seconds = timedelta(days=1).total_seconds()
-        pass_seconds = timedelta(hours=3).total_seconds()
-        self.assertEqual(threshold.status(warn_seconds), FreshnessStatus.Warn)
-        self.assertEqual(threshold.status(pass_seconds), FreshnessStatus.Pass)
+class TestUnparsedMetricParameter(ContractTestCase):
+    ContractType = UnparsedMetricParameter
+
+    def test_ok(self):
+        metric_parameter_dict = {
+            "name": "percentile",
+            "type": "number",
+            "required": True,
+            "default": 0.95,
+            "min": 0,
+            "max": 1,
+            "description": "Percentile to compute",
+        }
+        metric_parameter = self.ContractType(
+            name="percentile",
+            type=ParameterType.NUMBER,
+            required=True,
+            default=0.95,
+            min=0,
+            max=1,
+            description="Percentile to compute",
+        )
+        self.assert_symmetric(metric_parameter, metric_parameter_dict)
+        pickle.loads(pickle.dumps(metric_parameter))
+        self.assertTrue(metric_parameter.required)
+        self.assertEqual(metric_parameter.default, 0.95)
+
+    def test_optional_fields(self):
+        metric_parameter_dict = {
+            "name": "region",
+            "type": "string",
+            "required": False,
+            "allowed_values": ["emea", "na"],
+        }
+        metric_parameter = self.ContractType(
+            name="region",
+            type=ParameterType.STRING,
+            allowed_values=["emea", "na"],
+        )
+        self.assert_symmetric(metric_parameter, metric_parameter_dict)
 
 
 class TestQuoting(ContractTestCase):

@@ -21,6 +21,7 @@ from dbt.artifacts.resources import (
     MetricConfig,
     MetricInput,
     MetricInputMeasure,
+    MetricParameter,
     MetricTimeWindow,
     MetricTypeParams,
     NonAdditiveDimension,
@@ -67,6 +68,7 @@ from dbt.contracts.graph.unparsed import (
     UnparsedMetricBase,
     UnparsedMetricInput,
     UnparsedMetricInputMeasure,
+    UnparsedMetricParameter,
     UnparsedMetricTypeParams,
     UnparsedMetricV2,
     UnparsedNonAdditiveDimension,
@@ -261,6 +263,27 @@ class MetricParser(YamlReader):
 
     def _get_period_agg(self, unparsed_period_agg: str) -> PeriodAggregation:
         return PeriodAggregation(unparsed_period_agg)
+
+    def _get_metric_parameters(
+        self,
+        unparsed_metric_parameters: Optional[List[UnparsedMetricParameter]],
+    ) -> List[MetricParameter]:
+        metric_parameters: List[MetricParameter] = []
+        if unparsed_metric_parameters is not None:
+            for unparsed_metric_parameter in unparsed_metric_parameters:
+                metric_parameters.append(
+                    MetricParameter(
+                        name=unparsed_metric_parameter.name,
+                        type=unparsed_metric_parameter.type,
+                        required=unparsed_metric_parameter.required,
+                        default=unparsed_metric_parameter.default,
+                        allowed_values=unparsed_metric_parameter.allowed_values,
+                        min=unparsed_metric_parameter.min,
+                        max=unparsed_metric_parameter.max,
+                        description=unparsed_metric_parameter.description,
+                    )
+                )
+        return metric_parameters
 
     def _get_optional_time_window(
         self, unparsed_window: Optional[str]
@@ -591,6 +614,7 @@ class MetricParser(YamlReader):
             ),
             time_granularity=unparsed.time_granularity,
             filter=parse_where_filter(unparsed.filter),
+            parameters=self._get_metric_parameters(unparsed.parameters),
             meta=meta,
             tags=tags,
             config=config,

@@ -63,6 +63,7 @@ from dbt.artifacts.resources.v1.metric import (
     MetricConfig,
     MetricInput,
     MetricInputMeasure,
+    MetricParameter,
     MetricTimeWindow,
     MetricTypeParams,
 )

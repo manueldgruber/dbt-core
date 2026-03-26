@@ -50,6 +50,7 @@ from dbt_common.exceptions import DbtInternalError
 from dbt_semantic_interfaces.type_enums import (
     ConversionCalculationType,
     DimensionType,
+    ParameterType,
     PeriodAggregation,
 )
 
@@ -369,6 +370,18 @@ class UnparsedMetricTypeParams(dbtClassMixin):
     cumulative_type_params: Optional[UnparsedCumulativeTypeParams] = None
 
 
+@dataclass
+class UnparsedMetricParameter(dbtClassMixin):
+    name: str
+    type: ParameterType
+    required: bool = False
+    default: Optional[Any] = None
+    allowed_values: Optional[List[Any]] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    description: Optional[str] = None
+
+
 @dataclass(kw_only=True)
 class UnparsedMetricBase(dbtClassMixin):
 
@@ -379,6 +392,7 @@ class UnparsedMetricBase(dbtClassMixin):
     # Note: `Union` must be the outermost part of the type annotation for serialization to work properly.
     filter: Union[str, List[str], None] = None
     time_granularity: Optional[str] = None
+    parameters: List[UnparsedMetricParameter] = field(default_factory=list)
 
     config: Dict[str, Any] = field(default_factory=dict)
 

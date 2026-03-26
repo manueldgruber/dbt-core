@@ -876,6 +876,24 @@ schema_yml_v2_simple_metric_on_model_1 = """
         calculation: conversion_rate
         base_metric: simple_metric
         conversion_metric: simple_metric_2
+      - name: parameterized_percentile_metric
+        description: "P{{ parameter('percentile_label') }} percentile"
+        label: "P{{ parameter('percentile_label') }}"
+        type: simple
+        agg: percentile
+        expr: second_col
+        percentile: 0.99
+        parameters:
+          - name: percentile
+            type: number
+            required: true
+            min: 0
+            max: 1
+          - name: percentile_label
+            type: integer
+            default: 99
+            min: 0
+            max: 100
 """
 
 schema_yml_v2_metrics_with_hidden = """

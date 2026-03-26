@@ -6,6 +6,7 @@ from core.dbt.contracts.graph.manifest import Manifest
 from dbt.artifacts.resources.types import NodeType
 from dbt.artifacts.resources.v1.metric import (
     CumulativeTypeParams,
+    MetricParameter,
     MetricTimeWindow,
     MetricTypeParams,
 )
@@ -26,6 +27,7 @@ from dbt_common.events.event_catcher import EventCatcher
 from dbt_common.events.event_manager_client import add_callback_to_manager
 from dbt_semantic_interfaces.type_enums import TimeGranularity
 from dbt_semantic_interfaces.type_enums.metric_type import MetricType
+from dbt_semantic_interfaces.type_enums.parameter_type import ParameterType
 
 
 # Overwrite the default nods to construct the manifest
@@ -241,3 +243,39 @@ class TestSemanticManifest:
             sm_manifest = SemanticManifest(manifest)
             assert sm_manifest.validate() is True, "Semantic manifest should validate successfully"
             assert len(event_catcher.caught_events) == 1
+
+    def test_metric_parameters_are_preserved_in_semantic_manifest(self, manifest: Manifest):
+        manifest.metrics["metric.test.parameterized_metric"] = Metric(
+            name="parameterized_metric",
+            type=MetricType.SIMPLE,
+            type_params=MetricTypeParams(),
+            parameters=[
+                MetricParameter(
+                    name="percentile",
+                    type=ParameterType.NUMBER,
+                    required=True,
+                    default=0.95,
+                    min=0,
+                    max=1,
+                )
+            ],
+            resource_type=NodeType.Metric,
+            package_name="test",
+            path="models/test/parameterized_metric.yml",
+            original_file_path="models/test/parameterized_metric.yml",
+            unique_id="metric.test.parameterized_metric",
+            fqn=["test", "parameterized_metric"],
+            description="P{{ parameter('percentile') }} metric",
+            label="Parameterized Metric",
+        )
+
+        semantic_manifest = SemanticManifest(manifest)._get_pydantic_semantic_manifest()
+        parameterized_metric = next(
+            metric for metric in semantic_manifest.metrics if metric.name == "parameterized_metric"
+        )
+
+        assert parameterized_metric.description == "P{{ parameter('percentile') }} metric"
+        assert len(parameterized_metric.parameters) == 1
+        assert parameterized_metric.parameters[0].name == "percentile"
+        assert parameterized_metric.parameters[0].type == ParameterType.NUMBER
+        assert parameterized_metric.parameters[0].default == 0.95

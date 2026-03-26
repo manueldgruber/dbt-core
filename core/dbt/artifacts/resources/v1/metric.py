@@ -18,6 +18,7 @@ from dbt_semantic_interfaces.type_enums import (
     AggregationType,
     ConversionCalculationType,
     MetricType,
+    ParameterType,
     PeriodAggregation,
     TimeGranularity,
 )
@@ -111,6 +112,18 @@ class MetricAggregationParams(dbtClassMixin):
 
 
 @dataclass
+class MetricParameter(dbtClassMixin):
+    name: str
+    type: ParameterType
+    required: bool = False
+    default: Optional[Any] = None
+    allowed_values: Optional[List[Any]] = None
+    min: Optional[float] = None
+    max: Optional[float] = None
+    description: Optional[str] = None
+
+
+@dataclass
 class MetricTypeParams(dbtClassMixin):
     # Only used in v1 Semantic YAML
     measure: Optional[MetricInputMeasure] = None
@@ -162,6 +175,7 @@ class Metric(GraphResource):
     type: MetricType
     type_params: MetricTypeParams
     filter: Optional[WhereFilterIntersection] = None
+    parameters: List[MetricParameter] = field(default_factory=list)
     metadata: Optional[SourceFileMetadata] = None
     time_granularity: Optional[str] = None
     resource_type: Literal[NodeType.Metric]
