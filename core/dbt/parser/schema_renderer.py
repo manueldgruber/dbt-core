@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict
 
 from dbt.config.renderer import BaseRenderer, Keypath
@@ -13,6 +14,8 @@ from dbt.config.renderer import BaseRenderer, Keypath
 # Descriptions are not rendered until 'process_docs'.
 # Pre- and post-hooks in configs are late-rendered.
 class SchemaYamlRenderer(BaseRenderer):
+    _PARAMETER_CALL_PATTERN = re.compile(r"\{\{\s*parameter\(")
+
     def __init__(self, context: Dict[str, Any], key: str) -> None:
         super().__init__(context)
         self.key = key
@@ -85,6 +88,22 @@ class SchemaYamlRenderer(BaseRenderer):
         return False
 
     # don't render descriptions or test keyword arguments
+    def render_entry(self, value: Any, keypath: Keypath) -> Any:
+        if self._should_preserve_parameterized_metric_value(keypath=keypath, value=value):
+            return value
+        return super().render_entry(value, keypath)
+
+    def _should_preserve_parameterized_metric_value(self, keypath: Keypath, value: Any) -> bool:
+        if not isinstance(value, str):
+            return False
+        if not self._PARAMETER_CALL_PATTERN.search(value):
+            return False
+
+        if self.key == "metrics":
+            return True
+
+        return len(keypath) > 0 and keypath[0] == "metrics"
+
     def should_render_keypath(self, keypath: Keypath) -> bool:
         if len(keypath) < 1:
             return True

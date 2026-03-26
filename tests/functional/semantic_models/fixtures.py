@@ -894,6 +894,17 @@ schema_yml_v2_simple_metric_on_model_1 = """
             default: 99
             min: 0
             max: 100
+      - name: parameterized_filter_metric
+        description: Metric with a parameterized filter
+        label: Parameterized Filter Metric
+        type: simple
+        agg: count
+        expr: id
+        filter: "{{ Dimension('id_entity__id_dim') }} = '{{ parameter('entity_id') }}'"
+        parameters:
+          - name: entity_id
+            type: string
+            required: true
 """
 
 schema_yml_v2_metrics_with_hidden = """
